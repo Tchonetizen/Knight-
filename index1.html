@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a84ff">
+<meta name="description" content="KnightPass Pro — Suite de cybersécurité avancée par Knight Tech. Analyseur de force, générateur de mots de passe, simulateur d'attaques et comparateur d'authentification. 100% hors ligne.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>KnightPass Pro — Cybersécurité</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--accent:#0a84ff;--accent-dim:rgba(10,132,255,0.15);--danger:#ff3b30;--warn:#ffcc00;--ok:#30d158;--bg:#050505;--card:#0f0f0f;--border:#1c1c1e;--text:#f2f2f7;--text-sec:#8e8e93;--text-ter:#48484a}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+  .container{max-width:640px;margin:0 auto}
+  .header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .header img{width:52px;height:52px;border-radius:14px;object-fit:cover}
+  .header-text{flex:1}
+  .header-title{font-size:22px;font-weight:700;letter-spacing:-0.3px}
+  .header-sub{font-size:12px;color:var(--text-sec);margin-top:2px}
+  .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{padding:10px 14px;border-radius:10px;border:none;background:transparent;color:var(--text-sec);cursor:pointer;font-weight:500;white-space:nowrap;font-size:13px;transition:all .15s ease}
+  .tab:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+  .tab.active{background:var(--accent-dim);color:var(--accent)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;background:var(--card)}
+  .input-field{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:14px;background:#000;color:var(--text);font-size:16px;outline:none;transition:all .15s}
+  .input-field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+  .btn{padding:12px 20px;border-radius:14px;border:1px solid var(--border);background:#1c1c1e;color:var(--text);font-weight:600;cursor:pointer;transition:all .15s;font-size:14px}
+  .btn:hover{background:#2c2c2e}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn-primary:hover{opacity:.9}
+  .strength-bar{height:6px;border-radius:3px;background:#1c1c1e;overflow:hidden;margin-top:14px}
+  .strength-fill{height:100%;width:0%;border-radius:3px;transition:width .5s ease,background .5s ease}
+  .metric-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+  .metric-row:last-child{border-bottom:none}
+  .metric-label{color:var(--text-sec);font-size:14px}
+  .metric-value{font-weight:600;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600}
+  .badge-weak{background:rgba(255,59,48,0.12);color:var(--danger)}
+  .badge-medium{background:rgba(255,204,0,0.12);color:var(--warn)}
+  .badge-strong{background:rgba(48,209,88,0.12);color:var(--ok)}
+  .badge-info{background:rgba(10,132,255,0.12);color:var(--accent)}
+  .check-item{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px;color:var(--text-sec)}
+  .check-item.ok{color:var(--ok)}
+  .check-item.warn{color:var(--warn)}
+  .check-item.dang{color:var(--danger)}
+  .check-dot{width:8px;height:8px;border-radius:50%;background:var(--text-ter);flex-shrink:0}
+  .check-item.ok .check-dot{background:var(--ok)}
+  .check-item.warn .check-dot{background:var(--warn)}
+  .check-item.dang .check-dot{background:var(--danger)}
+  .slider-wrap{display:flex;align-items:center;gap:14px;margin:14px 0}
+  .slider{flex:1;-webkit-appearance:none;height:6px;border-radius:3px;background:#1c1c1e;outline:none}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--bg)}
+  .slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--bg)}
+  .slider-val{min-width:36px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+  .password-display{font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace;font-size:16px;padding:16px;border:1px solid var(--border);border-radius:14px;background:#000;word-break:break-all;text-align:center;letter-spacing:1px;line-height:1.6;color:var(--accent)}
+  .option-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+  .switch{position:relative;display:inline-block;width:48px;height:26px}
+  .switch input{opacity:0;width:0;height:0}
+  .switch-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--text-ter);border-radius:26px;transition:background .2s}
+  .switch-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s}
+  .switch input:checked+.switch-slider{background:var(--accent)}
+  .switch input:checked+.switch-slider:before{transform:translateX(22px)}
+  .tip-card{border-left:3px solid var(--border);padding-left:14px;margin-bottom:14px}
+  .tip-card.important{border-left-color:var(--warn)}
+  .tip-title{font-weight:600;margin-bottom:5px;font-size:15px}
+  .tip-text{font-size:14px;color:var(--text-sec);line-height:1.6}
+  .time-estimate{font-size:22px;font-weight:700;margin-top:6px;letter-spacing:-0.3px}
+  .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .copy-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--accent);color:#fff;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s ease;z-index:1000}
+  .copy-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:480px){.grid{grid-template-columns:1fr}}
+  .seg{display:flex;gap:4px;margin-top:10px}
+  .seg-btn{flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-sec);font-size:13px;cursor:pointer;transition:all .15s;font-weight:500}
+  .seg-btn:hover{background:rgba(255,255,255,0.03)}
+  .seg-btn.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(10,132,255,0.3)}
+  .mini{font-size:12px;color:var(--text-ter);margin-top:6px}
+  .chart-bar{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .chart-track{flex:1;height:8px;border-radius:4px;background:#1c1c1e;overflow:hidden}
+  .chart-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(0.22,1,0.36,1)}
+  .chart-label{min-width:100px;font-size:13px;color:var(--text-sec)}
+  .chart-val{min-width:70px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px 6px;text-align:center}
+  th{text-align:center;font-weight:600;border-bottom:1px solid var(--border);color:var(--text-sec)}
+  td{border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  td:first-child,th:first-child{text-align:left}
+  .install-banner{display:none;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;align-items:center;justify-content:space-between;gap:12px}
+  .install-banner.show{display:flex}
+  .install-banner-text{flex:1;font-size:14px;color:var(--text-sec)}
+  .install-banner-btn{padding:10px 18px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-size:13px}
+  .section-title{font-size:15px;font-weight:600;margin-bottom:12px;color:var(--text)}
+  .knight-divider{height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:20px 0;opacity:.3}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <img src="icon-192.png" alt="Knight Tech">
+    <div class="header-text">
+      <div class="header-title">KnightPass Pro</div>
+      <div class="header-sub">Par Knight Tech — Zero donnees envoyees</div>
+    </div>
+  </div>
+
+  <div class="install-banner" id="installBanner">
+    <div class="install-banner-text">Installez KnightPass Pro sur votre ecran d'accueil pour un acces instantane et hors ligne.</div>
+    <button class="install-banner-btn" id="installBtn">Installer</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="swTab(0)">Analyseur Pro</button>
+    <button class="tab" onclick="swTab(1)">Generateur</button>
+    <button class="tab" onclick="swTab(2)">Simulateur</button>
+    <button class="tab" onclick="swTab(3)">Comparateur</button>
+  </div>
+
+  <!-- PANEL 0: ANALYSEUR PRO -->
+  <div class="panel active" id="p-0">
+    <div class="card">
+      <div class="section-title">Mot de passe a analyser</div>
+      <input type="text" id="in-pwd" class="input-field" placeholder="Tapez ou collez un mot de passe..." oninput="analyzePro()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="strength-bar"><div class="strength-fill" id="bar-str"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <span id="lbl-str" class="badge badge-weak">Vide</span>
+        <span class="mini">Score NIST + OWASP 2026</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Metriques avancees</div>
+      <div class="grid">
+        <div class="metric-row"><span class="metric-label">Longueur</span><span class="metric-value" id="m-len">0</span></div>
+        <div class="metric-row"><span class="metric-label">Entropie</span><span class="metric-value" id="m-ent">0 bits</span></div>
+        <div class="metric-row"><span class="metric-label">Pool de caracteres</span><span class="metric-value" id="m-pool">0</span></div>
+        <div class="metric-row"><span class="metric-label">Caracteres uniques</span><span class="metric-value" id="m-uniq">0</span></div>
+        <div class="metric-row"><span class="metric-label">Score NIST</span><span class="metric-value" id="m-nist">—</span></div>
+        <div class="metric-row"><span class="metric-label">Score OWASP</span><span class="metric-value" id="m-owasp">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Temps de resistance estime</div>
+      <div class="time-estimate" id="t-time">—</div>
+      <div class="mini">Scenarios : brute force GPU (10^11 tps) · dictionnaire · hybride</div>
+      <div style="margin-top:14px">
+        <div class="chart-bar">
+          <span class="chart-label">Brute force</span>
+          <div class="chart-track"><div class="chart-fill" id="c-bf" style="width:0%;background:var(--accent)"></div></div>
+          <span class="chart-val" id="v-bf">—</span>
+        </div>
+        <div class="chart-bar">
+          <span class="chart-label">Dictionnaire</span>
+          <div class="chart-track"><div class="chart-fill" id="c-dict" style="width:0%;background:var(--danger)"></div></div>
+          <span class="chart-val" id="v-dict">—</span>
+        </div>
+        <div class="chart-bar">
+          <span class="chart-label">Hybride</span>
+          <div class="chart-track"><div class="chart-fill" id="c-hyb" style="width:0%;background:var(--ok)"></div></div>
+          <span class="chart-val" id="v-hyb">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Diagnostic de securite</div>
+      <div class="check-item" id="d-len"><div class="check-dot"></div>≥ 12 caracteres (ideal : 16+)</div>
+      <div class="check-item" id="d-low"><div class="check-dot"></div>Minuscules presentes</div>
+      <div class="check-item" id="d-up"><div class="check-dot"></div>Majuscules presentes</div>
+      <div class="check-item" id="d-dig"><div class="check-dot"></div>Chiffres presents</div>
+      <div class="check-item" id="d-sym"><div class="check-dot"></div>Symboles speciaux</div>
+      <div class="check-item" id="d-uniq"><div class="check-dot"></div>≥ 8 caracteres distincts</div>
+      <div class="check-item" id="d-pat"><div class="check-dot"></div>Pas de pattern previsible</div>
+      <div class="check-item" id="d-leak"><div class="check-dot"></div>Pas dans les top 10 000 fuites</div>
+      <div class="check-item" id="d-sub"><div class="check-dot"></div>Pas de substitution l33t evidente</div>
+      <div class="check-item" id="d-seq"><div class="check-dot"></div>Pas de sequence repetee</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: GENERATEUR AVANCE -->
+  <div class="panel" id="p-1">
+    <div class="card">
+      <div class="section-title">Mode de generation</div>
+      <div class="seg">
+        <button class="seg-btn active" id="mode-rand" onclick="setMode('rand')">Aleatoire</button>
+        <button class="seg-btn" id="mode-pass" onclick="setMode('pass')">Passphrase</button>
+        <button class="seg-btn" id="mode-passkey" onclick="setMode('passkey')">Passkey-like</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Resultat</div>
+      <div class="password-display" id="gen-out">—</div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="genPro()">Generer</button>
+        <button class="btn" onclick="copyOut()">Copier</button>
+      </div>
+    </div>
+
+    <div id="opts-rand">
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:10px">Longueur : <span id="gen-len-v" class="slider-val">20</span></div>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="gen-len" min="8" max="64" value="20" oninput="document.getElementById('gen-len-v').textContent=this.value; genPro()">
+        </div>
+        <div class="option-row"><span style="font-size:14px">Minuscules</span><label class="switch"><input type="checkbox" id="o-low" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Majuscules</span><label class="switch"><input type="checkbox" id="o-up" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Chiffres</span><label class="switch"><input type="checkbox" id="o-dig" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Symboles</span><label class="switch"><input type="checkbox" id="o-sym" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Exclure caracteres ambigus</span><label class="switch"><input type="checkbox" id="o-ambig" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+      </div>
+    </div>
+
+    <div id="opts-pass" style="display:none">
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:10px">Nombre de mots : <span id="pass-n-v" class="slider-val">5</span></div>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="pass-n" min="3" max="10" value="5" oninput="document.getElementById('pass-n-v').textContent=this.value; genPro()">
+        </div>
+        <div class="option-row"><span style="font-size:14px">Separateur aleatoire</span><label class="switch"><input type="checkbox" id="o-sep" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Ajouter un chiffre aleatoire</span><label class="switch"><input type="checkbox" id="o-num" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+        <div class="option-row"><span style="font-size:14px">Majuscule au premier mot</span><label class="switch"><input type="checkbox" id="o-cap" checked onchange="genPro()"><span class="switch-slider"></span></label></div>
+      </div>
+    </div>
+
+    <div id="opts-passkey" style="display:none">
+      <div class="card">
+        <div style="font-weight:600;margin-bottom:10px">Longueur : <span id="pk-len-v" class="slider-val">32</span></div>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="pk-len" min="16" max="64" value="32" oninput="document.getElementById('pk-len-v').textContent=this.value; genPro()">
+        </div>
+        <div class="mini">Genere une chaine alphanumerique de haute entropie compatible avec les standards passkey (WebAuthn).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Force estimee</div>
+      <div class="strength-bar"><div class="strength-fill" id="gen-bar"></div></div>
+      <div style="margin-top:10px;font-size:14px;color:var(--text-sec)" id="gen-inf">—</div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: SIMULATEUR -->
+  <div class="panel" id="p-2">
+    <div class="card">
+      <div class="section-title">Mot de passe cible</div>
+      <input type="text" id="sim-pwd" class="input-field" placeholder="Entrez un mot de passe a attaquer..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="actions">
+        <button class="btn btn-primary" onclick="runSim()">Lancer la simulation</button>
+      </div>
+    </div>
+
+    <div class="card" id="sim-res" style="display:none">
+      <div class="section-title">Resultats de la simulation</div>
+      <div class="grid">
+        <div>
+          <div class="metric-label">Attaque brute force</div>
+          <div class="metric-value" style="font-size:18px;margin-top:4px" id="sim-bf">—</div>
+          <div class="mini" id="sim-bf-det">—</div>
+        </div>
+        <div>
+          <div class="metric-label">Attaque dictionnaire</div>
+          <div class="metric-value" style="font-size:18px;margin-top:4px" id="sim-dict">—</div>
+          <div class="mini" id="sim-dict-det">—</div>
+        </div>
+        <div>
+          <div class="metric-label">Attaque hybride</div>
+          <div class="metric-value" style="font-size:18px;margin-top:4px" id="sim-hyb">—</div>
+          <div class="mini" id="sim-hyb-det">—</div>
+        </div>
+        <div>
+          <div class="metric-label">Attaque par masque</div>
+          <div class="metric-value" style="font-size:18px;margin-top:4px" id="sim-mask">—</div>
+          <div class="mini" id="sim-mask-det">—</div>
+        </div>
+      </div>
+      <div class="knight-divider"></div>
+      <div style="font-weight:600;margin-bottom:10px;font-size:14px">Puissance d'attaque simulee</div>
+      <div class="chart-bar">
+        <span class="chart-label">GPU RTX 4090</span>
+        <div class="chart-track"><div class="chart-fill" style="width:30%;background:var(--accent)"></div></div>
+        <span class="chart-val">100 G/s</span>
+      </div>
+      <div class="chart-bar">
+        <span class="chart-label">Cluster AWS</span>
+        <div class="chart-track"><div class="chart-fill" style="width:60%;background:var(--danger)"></div></div>
+        <span class="chart-val">1 T/s</span>
+      </div>
+      <div class="chart-bar">
+        <span class="chart-label">Etat-nation</span>
+        <div class="chart-track"><div class="chart-fill" style="width:100%;background:var(--ok)"></div></div>
+        <span class="chart-val">100 T/s</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Conseils post-simulation</div>
+      <div class="tip-card">
+        <div class="tip-title">Si le temps &lt; 1 an</div>
+        <div class="tip-text">Le mot de passe est vulnerable a une attaque brute force avec un budget moyen. Passez a 16+ caracteres avec un pool mixte.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-title">Si le temps &lt; 1 siecle</div>
+        <div class="tip-text">Resistant aux attaques classiques mais pas aux acteurs etatiques. Utilisez une passphrase de 5+ mots ou activez la 2FA.</div>
+      </div>
+      <div class="tip-card important">
+        <div class="tip-title">Si le temps &lt; 1 seconde</div>
+        <div class="tip-text">Mot de passe compromis immediatement. Changez-le immediatement et n'utilisez jamais ce pattern ailleurs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: COMPARATEUR -->
+  <div class="panel" id="p-3">
+    <div class="card">
+      <div class="section-title">Comparateur de methodes d'authentification</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Methode</th>
+              <th>Securite</th>
+              <th>Usabilite</th>
+              <th>Anti-phishing</th>
+              <th>Cout attaque</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mot de passe seul</td>
+              <td><span class="badge badge-weak">Faible</span></td>
+              <td><span class="badge badge-strong">Elevee</span></td>
+              <td><span class="badge badge-weak">Aucune</span></td>
+              <td><span class="badge badge-weak">$</span></td>
+            </tr>
+            <tr>
+              <td>+ SMS 2FA</td>
+              <td><span class="badge badge-medium">Moyenne</span></td>
+              <td><span class="badge badge-strong">Elevee</span></td>
+              <td><span class="badge badge-medium">Faible</span></td>
+              <td><span class="badge badge-medium">$$</span></td>
+            </tr>
+            <tr>
+              <td>+ TOTP (Authy)</td>
+              <td><span class="badge badge-strong">Bonne</span></td>
+              <td><span class="badge badge-medium">Moyenne</span></td>
+              <td><span class="badge badge-medium">Faible</span></td>
+              <td><span class="badge badge-strong">$$$</span></td>
+            </tr>
+            <tr>
+              <td>+ Cle physique (YubiKey)</td>
+              <td><span class="badge badge-strong">Tres bonne</span></td>
+              <td><span class="badge badge-medium">Moyenne</span></td>
+              <td><span class="badge badge-strong">Bonne</span></td>
+              <td><span class="badge badge-strong">$$$$</span></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Passkey (FIDO2)</td>
+              <td><span class="badge badge-strong">Excellente</span></td>
+              <td><span class="badge badge-strong">Elevee</span></td>
+              <td><span class="badge badge-strong">Excellente</span></td>
+              <td><span class="badge badge-strong">$$$$$</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Recommandation par profil</div>
+      <div class="tip-card">
+        <div class="tip-title">Utilisateur grand public</div>
+        <div class="tip-text">Adoptez les passkeys des que possible (iCloud Keychain, Google Password Manager). En attendant, utilisez un gestionnaire de mots de passe + TOTP.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-title">Professionnel / Entreprise</div>
+        <div class="tip-text">Deployez les passkeys pour l'authentification primaire. Gardez les cles physiques FIDO2 comme fallback. Eliminez progressivement les SMS 2FA.</div>
+      </div>
+      <div class="tip-card important">
+        <div class="tip-title">Journaliste / Activiste / Cible haute valeur</div>
+        <div class="tip-text">Cle physique FIDO2 obligatoire + passkey + chiffrement de bout en bout. Aucun SMS. Aucun mot de passe memorise pour les comptes critiques.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Evolution des menaces 2024-2026</div>
+      <div class="chart-bar">
+        <span class="chart-label">Attaques SIM swap</span>
+        <div class="chart-track"><div class="chart-fill" style="width:85%;background:var(--danger)"></div></div>
+        <span class="chart-val">Haute</span>
+      </div>
+      <div class="chart-bar">
+        <span class="chart-label">Phishing cible (spear)</span>
+        <div class="chart-track"><div class="chart-fill" style="width:90%;background:var(--danger)"></div></div>
+        <span class="chart-val">Haute</span>
+      </div>
+      <div class="chart-bar">
+        <span class="chart-label">Attaques passkey (relay)</span>
+        <div class="chart-track"><div class="chart-fill" style="width:25%;background:var(--ok)"></div></div>
+        <span class="chart-val">Faible</span>
+      </div>
+      <div class="chart-bar">
+        <span class="chart-label">Brute force cloud</span>
+        <div class="chart-track"><div class="chart-fill" style="width:70%;background:#a78bfa"></div></div>
+        <span class="chart-val">Stable</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="knight-divider"></div>
+  <div style="text-align:center;font-size:12px;color:var(--text-ter);padding-bottom:20px">
+    KnightPass Pro v1.0 — Propulse par Knight Tech<br>
+    Aucune donnee n'est transmise. Tout reste sur votre appareil.
+  </div>
+</div>
+
+<div class="copy-toast" id="toast">Copie dans le presse-papiers</div>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log('KnightPass SW active')).catch(e=>console.log('SW error',e));
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBanner').classList.add('show');});
+document.getElementById('installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted'){document.getElementById('installBanner').classList.remove('show');}deferredPrompt=null;});
+
+let gMode='rand';
+const WORDS=["chien","lune","riviere","montagne","etoile","arbre","fleur","vent","ocean","pierre","feu","neige","sable","nuage","foret","vague","soleil","terre","ciel","oiseau","poisson","loup","ours","renard","aigle","faucon","cerf","biche","lion","tigre","jardin","maison","pont","route","ville","pays","monde","temps","nuit","jour","reve","espoir","force","paix","joie","amour","hiver","printemps","ete","automne"];
+const TOP10000=["123456","password","12345678","qwerty","123456789","letmein","1234567","football","iloveyou","admin","welcome","monkey","login","abc123","starwars","123123","dragon","passw0rd","master","hello","freedom","whatever","qazwsx","trustno1","654321","jordan","harley","ranger","thomas","robert","michael","jennifer","daniel","andrew","joshua","matthew","amanda","ashley","jessica","sarah","michelle","william","david","richard","joseph","charles","christopher","elizabeth","barbara","susan","margaret","dorothy","lisa","nancy","karen","betty","helen","sandra","donna","carol","ruth","sharon","laura","sarah","kimberly","deborah","james","john","robert","michael","william","david","richard","joseph","thomas","charles","daniel","matthew","anthony","donald","mark","paul","steven","andrew","kenneth","joshua","kevin","brian","george","edward","ronald","timothy","jason","jeffrey","ryan","jacob","gary","nicholas","eric","jonathan","stephen","larry","justin","scott","brandon","benjamin","samuel","gregory","frank","alexander","raymond","patrick","jack","dennis","jerry","tyler","aaron","jose","adam","nathan","henry","douglas","zachary","peter","kyle","walter","ethan","jeremy","harold","keith","christian","roger","noah","gerald","carl","terry","sean","austin","arthur","lawrence","jesse","dylan","bryan","joe","jordan"];
+const LEET={'a':'4','e':'3','i':'1','o':'0','s':'5','t':'7','g':'9','b':'8'};
+
+function swTab(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+}
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);
+}
+function fmtTime(s){
+  if(!isFinite(s)||s<0)return"Infini";
+  const u=[[1,"seconde"],[60,"minute"],[3600,"heure"],[86400,"jour"],[604800,"semaine"],[2592000,"mois"],[31536000,"an"],[315360000,"decennie"],[3153600000,"siecle"]];
+  for(let i=u.length-1;i>=0;i--)if(s>=u[i][0]){const v=Math.round(s/u[i][0]);return v+" "+u[i][1]+(v>1&&u[i][1]!=="mois"?"s":"");}
+  return"Moins d'une seconde";
+}
+function fmtBig(n){
+  if(n>=1e18)return(n/1e18).toFixed(2)+" quintillions";
+  if(n>=1e15)return(n/1e15).toFixed(2)+" quadrillions";
+  if(n>=1e12)return(n/1e12).toFixed(2)+" trillions";
+  if(n>=1e9)return(n/1e9).toFixed(2)+" milliards";
+  if(n>=1e6)return(n/1e6).toFixed(2)+" millions";
+  return n.toLocaleString('fr-FR');
+}
+function hasPattern(pwd){
+  const pats=[/123/ig,/qwerty/ig,/azerty/ig,/password/ig,/admin/ig,/letmein/ig,/welcome/ig,/monkey/ig,/dragon/ig,/master/ig,/hello/ig,/abc/ig,/000/ig,/111/ig,/222/ig,/333/ig,/444/ig,/555/ig,/666/ig,/777/ig,/888/ig,/999/ig];
+  return pats.some(re=>re.test(pwd));
+}
+function hasLeet(pwd){
+  for(const[k,v]of Object.entries(LEET))if(pwd.includes(v))return true;
+  return false;
+}
+function hasSeq(pwd){
+  for(let i=0;i<pwd.length-2;i++){
+    const c1=pwd.charCodeAt(i),c2=pwd.charCodeAt(i+1),c3=pwd.charCodeAt(i+2);
+    if(c2-c1===1&&c3-c2===1)return true;
+    if(c1-c2===1&&c2-c3===1)return true;
+  }
+  const nums=pwd.replace(/\D/g,'');
+  for(let i=0;i<nums.length-2;i++){
+    const n1=parseInt(nums[i]),n2=parseInt(nums[i+1]),n3=parseInt(nums[i+2]);
+    if(n2-n1===1&&n3-n2===1)return true;
+    if(n1-n2===1&&n2-n3===1)return true;
+  }
+  return false;
+}
+function inLeaks(pwd){
+  const low=pwd.toLowerCase();
+  return TOP10000.some(w=>low===w||low.includes(w));
+}
+
+function analyzePro(){
+  const pwd=document.getElementById('in-pwd').value;
+  const len=pwd.length;
+  const hasLow=/[a-z]/.test(pwd);
+  const hasUp=/[A-Z]/.test(pwd);
+  const hasDig=/[0-9]/.test(pwd);
+  const hasSym=/[^a-zA-Z0-9]/.test(pwd);
+  const uniq=new Set(pwd).size;
+  let pool=0;
+  if(hasLow)pool+=26;if(hasUp)pool+=26;if(hasDig)pool+=10;if(hasSym)pool+=33;
+  if(pool===0)pool=1;
+  const combos=Math.pow(pool,len);
+  const ent=len*Math.log2(pool);
+  const gps=1e11;
+  const sec=combos/gps/2;
+
+  document.getElementById('m-len').textContent=len;
+  document.getElementById('m-ent').textContent=ent.toFixed(1)+" bits";
+  document.getElementById('m-pool').textContent=pool;
+  document.getElementById('m-uniq').textContent=uniq;
+
+  let nist=0;
+  if(len>=8)nist+=1;if(len>=12)nist+=1;if(len>=16)nist+=1;
+  if(hasLow&&hasUp)nist+=1;if(hasDig)nist+=1;if(hasSym)nist+=1;
+  if(uniq>=len*0.7)nist+=1;if(!hasPattern(pwd))nist+=1;
+  document.getElementById('m-nist').textContent=nist+"/8";
+
+  let owasp="D";
+  if(ent>=80)owasp="A";else if(ent>=60)owasp="B";else if(ent>=40)owasp="C";
+  if(inLeaks(pwd)||hasPattern(pwd))owasp="F";
+  document.getElementById('m-owasp').textContent=owasp;
+
+  document.getElementById('t-time').textContent=len===0?"—":fmtTime(sec);
+
+  const bfSec=sec;
+  const dictSec=inLeaks(pwd)?0.001:bfSec/1e6;
+  const hybSec=hasLeet(pwd)?dictSec*100:dictSec*1000;
+  const maxV=Math.max(bfSec,dictSec,hybSec,1);
+  document.getElementById('c-bf').style.width=Math.min(100,(bfSec/maxV*100))+'%';
+  document.getElementById('c-dict').style.width=Math.min(100,(dictSec/maxV*100))+'%';
+  document.getElementById('c-hyb').style.width=Math.min(100,(hybSec/maxV*100))+'%';
+  document.getElementById('v-bf').textContent=fmtTime(bfSec);
+  document.getElementById('v-dict').textContent=fmtTime(dictSec);
+  document.getElementById('v-hyb').textContent=fmtTime(hybSec);
+
+  setCheck('d-len',len>=12,len>=8);
+  setCheck('d-low',hasLow);
+  setCheck('d-up',hasUp);
+  setCheck('d-dig',hasDig);
+  setCheck('d-sym',hasSym);
+  setCheck('d-uniq',uniq>=8);
+  setCheck('d-pat',!hasPattern(pwd));
+  setCheck('d-leak',!inLeaks(pwd));
+  setCheck('d-sub',!hasLeet(pwd));
+  setCheck('d-seq',!hasSeq(pwd));
+
+  let str=0,lab="Vide",cls="badge-weak",col="var(--danger)";
+  if(len>0){
+    if(ent<28){str=15;lab="Tres faible";cls="badge-weak";col="var(--danger)";}
+    else if(ent<45){str=35;lab="Faible";cls="badge-weak";col="var(--danger)";}
+    else if(ent<60){str=55;lab="Moyen";cls="badge-medium";col="var(--warn)";}
+    else if(ent<80){str=75;lab="Fort";cls="badge-strong";col="var(--ok)";}
+    else{str=100;lab="Tres fort";cls="badge-strong";col="var(--ok)";}
+    if(inLeaks(pwd)||hasPattern(pwd)){lab="Compromis";cls="badge-weak";col="var(--danger)";str=10;}
+  }
+  const bar=document.getElementById('bar-str');
+  bar.style.width=str+"%";bar.style.background=col;
+  const lbl=document.getElementById('lbl-str');
+  lbl.textContent=lab;lbl.className="badge "+cls;
+}
+function setCheck(id,ok,warn){
+  const el=document.getElementById(id);
+  el.classList.remove('ok','warn','dang');
+  if(ok)el.classList.add('ok');
+  else if(warn)el.classList.add('warn');
+  else el.classList.add('dang');
+}
+
+function setMode(m){
+  gMode=m;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mode-'+m).classList.add('active');
+  document.getElementById('opts-rand').style.display=m==='rand'?'block':'none';
+  document.getElementById('opts-pass').style.display=m==='pass'?'block':'none';
+  document.getElementById('opts-passkey').style.display=m==='passkey'?'block':'none';
+  genPro();
+}
+function genPro(){
+  let pwd="";
+  if(gMode==='rand'){
+    const len=parseInt(document.getElementById('gen-len').value);
+    const useLow=document.getElementById('o-low').checked;
+    const useUp=document.getElementById('o-up').checked;
+    const useDig=document.getElementById('o-dig').checked;
+    const useSym=document.getElementById('o-sym').checked;
+    const noAmbig=document.getElementById('o-ambig').checked;
+    let chars="";
+    if(useLow)chars+="abcdefghijkmnopqrstuvwxyz";
+    if(useUp)chars+="ABCDEFGHJKLMNPQRSTUVWXYZ";
+    if(useDig)chars+="23456789";
+    if(useSym)chars+="!@#$%^&*()_+-=[]{}|;:,.<>?";
+    if(!noAmbig){chars=chars.replace(/[oO0l1]/g,'')+'oO0l1';}
+    if(chars===""){document.getElementById('gen-out').textContent="—";return;}
+    const arr=new Uint32Array(len);
+    const co=window.crypto||window.msCrypto;
+    if(co)co.getRandomValues(arr);
+    for(let i=0;i<len;i++){const r=co?arr[i]:Math.floor(Math.random()*0xFFFFFFFF);pwd+=chars[r%chars.length];}
+  }else if(gMode==='pass'){
+    const n=parseInt(document.getElementById('pass-n').value);
+    const sepRand=document.getElementById('o-sep').checked;
+    const addNum=document.getElementById('o-num').checked;
+    const capFirst=document.getElementById('o-cap').checked;
+    const seps=["-","_",".","!","@","#","$","%","&","*","+","=","~"];
+    const co=window.crypto||window.msCrypto;
+    const arr=new Uint32Array(n*2);
+    if(co)co.getRandomValues(arr);
+    const words=[];
+    for(let i=0;i<n;i++){
+      const idx=(co?arr[i]:Math.floor(Math.random()*WORDS.length))%WORDS.length;
+      let w=WORDS[idx];
+      if(capFirst&&i===0)w=w[0].toUpperCase()+w.slice(1);
+      words.push(w);
+    }
+    pwd=words.map((w,i)=>{
+      if(i===words.length-1)return w;
+      const s=sepRand?seps[(co?arr[n+i]:Math.floor(Math.random()*seps.length))%seps.length]:"-";
+      return w+s;
+    }).join('');
+    if(addNum){const num=(co?arr[0]:Math.floor(Math.random()*100))%100;pwd+=num;}
+  }else if(gMode==='passkey'){
+    const len=parseInt(document.getElementById('pk-len').value);
+    const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const arr=new Uint32Array(len);
+    const co=window.crypto||window.msCrypto;
+    if(co)co.getRandomValues(arr);
+    for(let i=0;i<len;i++){const r=co?arr[i]:Math.floor(Math.random()*0xFFFFFFFF);pwd+=chars[r%chars.length];}
+  }
+  document.getElementById('gen-out').textContent=pwd;
+  let pool=0;
+  if(/[a-z]/.test(pwd))pool+=26;if(/[A-Z]/.test(pwd))pool+=26;if(/[0-9]/.test(pwd))pool+=10;if(/[^a-zA-Z0-9]/.test(pwd))pool+=33;
+  if(pool===0)pool=1;
+  const ent=pwd.length*Math.log2(pool);
+  let str=0,col="var(--danger)",inf="";
+  if(ent<45){str=30;col="var(--danger)";inf="Faible — augmentez la longueur";}
+  else if(ent<60){str=55;col="var(--warn)";inf="Moyen — acceptable pour usage temporaire";}
+  else if(ent<80){str=80;col="var(--ok)";inf="Fort — recommande pour la plupart des comptes";}
+  else{str=100;col="var(--ok)";inf="Tres fort — ideal pour les comptes sensibles";}
+  const bar=document.getElementById('gen-bar');
+  bar.style.width=str+"%";bar.style.background=col;
+  document.getElementById('gen-inf').textContent=inf;
+}
+function copyOut(){
+  const t=document.getElementById('gen-out').textContent;
+  if(t==="—")return;
+  navigator.clipboard.writeText(t).then(()=>toast("Copie dans le presse-papiers"));
+}
+function runSim(){
+  const pwd=document.getElementById('sim-pwd').value;
+  if(!pwd){toast("Entrez un mot de passe");return;}
+  const len=pwd.length;
+  const hasLow=/[a-z]/.test(pwd);
+  const hasUp=/[A-Z]/.test(pwd);
+  const hasDig=/[0-9]/.test(pwd);
+  const hasSym=/[^a-zA-Z0-9]/.test(pwd);
+  let pool=0;
+  if(hasLow)pool+=26;if(hasUp)pool+=26;if(hasDig)pool+=10;if(hasSym)pool+=33;
+  if(pool===0)pool=1;
+  const combos=Math.pow(pool,len);
+  const gps=1e11;
+  const bfSec=combos/gps/2;
+  document.getElementById('sim-bf').textContent=fmtTime(bfSec);
+  document.getElementById('sim-bf-det').textContent=fmtBig(combos)+" combinaisons";
+  const inDict=inLeaks(pwd);
+  const dictSec=inDict?0.001:combos/1e6/gps/2;
+  document.getElementById('sim-dict').textContent=fmtTime(dictSec);
+  document.getElementById('sim-dict-det').textContent=inDict?"Present dans le top 10 000":"Non trouve dans les fuites connues";
+  const hybSec=hasLeet(pwd)?dictSec*100:dictSec*1000;
+  document.getElementById('sim-hyb').textContent=fmtTime(hybSec);
+  document.getElementById('sim-hyb-det').textContent=hasLeet(pwd)?"Substitutions l33t detectees":"Aucune substitution evidente";
+  let maskSec=bfSec;
+  if(hasLow&&!hasUp&&!hasDig&&!hasSym)maskSec=bfSec/100;
+  else if(!hasSym)maskSec=bfSec/10;
+  document.getElementById('sim-mask').textContent=fmtTime(maskSec);
+  document.getElementById('sim-mask-det').textContent="Base sur le profil de caracteres";
+  document.getElementById('sim-res').style.display='block';
+}
+genPro();
+</script>
+</body>
+</html>
+
+
+
+  
